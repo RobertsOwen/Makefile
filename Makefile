@@ -11,41 +11,74 @@
 # **************************************************************************** #
 
 NAME			=	TO_CHANGE
+FILE_EXTENSION	=	TO_CHANGE
 
-SRCS_DIR		=	./srcs/
-SRCS			=	
-vpath				%.cpp $(SRCS_DIR)
 
-HEADERS_DIR		=	./headers/
-HEADERS			=	
+##############################
+###          SRCS          ###
+##############################
+SRCS_DIR		=	srcs/
+SRCS			=	main.c \
+					pouet.c \
+					other.c \
+					sub/sub.c
+vpath				%.$(FILE_EXTENSION) $(SRCS_DIR)
+
+##############################
+###        HEADERS         ###
+##############################
+HEADERS_DIR		=	headers/
+HEADERS			=	head.h \
+					other.h
 vpath				%.h $(HEADERS_DIR)
 
-OBJS_DIR		=	./objs/
-OBJS			=	$(addprefix $(OBJS_DIR), $(SRCS:.cpp=.o))
+##############################
+###          OBJS          ###
+##############################
+OBJS_DIR		=	.objs/
+OBJS			=	$(addprefix $(OBJS_DIR)/, $(SRCS:.c=.o))
 vpath				%.o $(OBJS_DIR)
 
-DEP_DIR			=	./dependencies/
-DEP				=	$(addprefix $(DEP_DIR), $(SRCS:.cpp=.d))
+##############################
+###      DEPENDENCIES      ###
+##############################
+DEP_DIR			=	.dependencies/
+DEP				=	$(addprefix $(DEP_DIR)/, $(SRCS:.c=.d))
 vpath				%.d $(DEP_DIR)
 
-CC				=	clang++
-CFLAGS			=	-Wall -Wextra -Werror -std=c++98
-DEPFLAGS		=	-MT $@ -MMD -MP -MF $(DEP_DIR)$*.d
+
+##############################
+###      COMPILATION       ###
+##############################
+CC				=	TO_CHANGE
+CFLAGS			=	-Wall -Wextra -Werror
+DEPFLAGS		=	-MT $@ -MMD -MP -MF $(DEP_DIR)/$*.d
 SHELL			=	/bin/bash
 
-all				:	$(NAME)
 
-$(NAME)			:	$(OBJS_DIR) $(OBJS)
+
+
+##############################
+###         RULES          ###
+##############################
+
+all				:	$(OBJS_DIR) $(DEP_DIR) $(NAME)
+
+$(NAME)			:	$(OBJS)
 					$(CC) $(CFLAGS) $(DEPFLAGS) $(OBJS) -o $(NAME)
 
-$(OBJS_DIR)%.o	:	%.cpp $(DEP_DIR)%.d | $(DEP_DIR)
-					$(CC) ${CFLAGS} $(DEPFLAGS) -o $@ -c $<
-
-$(DEP_DIR)		:
-					mkdir -p $(DEP_DIR)
+$(OBJS_DIR)/%.o	:	%.c | $(DEP_DIR)/%.d
+					$(CC) $(CFLAGS) $(DEPFLAGS) -o $@ -c $<
 
 $(OBJS_DIR)		:
 					mkdir -p $(OBJS_DIR)
+					find srcs/* -type d
+					find srcs/* -type d | sed 's^$(SRCS_DIR)^$(OBJS_DIR)^g' | xargs mkdir -p
+
+
+$(DEP_DIR)		:
+					mkdir -p $(DEP_DIR)
+					find srcs/* -type d | sed 's^$(SRCS_DIR)^$(DEP_DIR)^g' | xargs mkdir -p
 
 clean			:
 					rm -rf $(OBJS_DIR)
@@ -62,7 +95,7 @@ remake			:	fclean dclean
 					sed -i "s/^SRCS\t.*/SRCS\t\t\t=\t$$(echo $$(ls $(SRCS_DIR) | grep .cpp))/" Makefile
 					sed -i "s/^HEADERS\t.*/HEADERS\t\t\t=\t$$(echo $$(ls $(HEADERS_DIR) | grep .hpp))/" Makefile
 
-.PHONY			:	all clean fclean re remake
+.PHONY			:	all clean fclean dclean re remake
 
 $(DEP)			:
 include $(wildcard $(DEP))
